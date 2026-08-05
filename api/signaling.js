@@ -4,6 +4,8 @@ import SignalingRateLimiter from
     "../server/signaling/SignalingRateLimiter.js";
 import UpstashRoomStore from
     "../server/signaling/UpstashRoomStore.js";
+import resolveUpstashConnection from
+    "../server/signaling/resolveUpstashConnection.js";
 import {
     createErrorResponse,
     executeSignalingAction
@@ -36,10 +38,9 @@ function getRuntime() {
     if (runtime) {
         return runtime;
     }
-    const store = new UpstashRoomStore({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN
-    });
+    const store = new UpstashRoomStore(
+        resolveUpstashConnection(process.env)
+    );
     runtime = {
         service: new RoomSignalingService({
             store,
