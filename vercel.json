@@ -1,8 +1,20 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": null,
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
     "functions": {
+        "api/network-config.js": {
+            "maxDuration": 10
+        },
         "api/signaling.js": {
             "maxDuration": 10
         }
-    }
+    },
+    "rewrites": [
+        {
+            "source": "/",
+            "destination": "/index.html"
+        }
+    ]
 }

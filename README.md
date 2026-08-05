@@ -67,6 +67,18 @@ UIテストには端末へインストール済みのMicrosoft EdgeまたはGoog
 
 ## VercelのルームAPI設定
 
+Vercelでは`server.js`を起動せず、`npm run build`でHTML、CSS、ブラウザ用JS、
+`assets`、`data`だけを`dist`へ出力して静的配信します。`vercel.json`が
+Framework Presetを`Other`、Build Commandを`npm run build`、Output Directoryを
+`dist`へ固定します。ルート`/`は`/index.html`へrewriteされ、ルート`api`ディレクトリの
+`network-config.js`と`signaling.js`はVercel Functionsとして別に配置されます。
+
+生成物と参照先だけを確認する場合は次を実行します。
+
+```powershell
+npm.cmd run test:static
+```
+
 Vercelへ配置する場合、ルーム情報の一時保存にUpstash Redisを使用します。
 Vercel MarketplaceでUpstash Redisを接続し、次の環境変数を設定してください。
 

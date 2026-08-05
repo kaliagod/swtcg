@@ -4,9 +4,11 @@
     "type": "module",
     "scripts": {
         "start": "node server.js",
+        "build": "node scripts/buildStaticSite.js",
         "test": "npm run test:engine && npm run test:ui",
         "test:engine": "node js/tests/runEngineTests.js",
         "test:ui": "node js/tests/testUiBasicOperations.js",
+        "test:static": "npm run build && node scripts/testStaticSite.js",
         "test:m3:deployment": "node scripts/verifyM3Deployment.js"
     },
     "devDependencies": {
