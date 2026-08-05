@@ -61,6 +61,7 @@ export default class WebRtcPeerSession {
         onStatus = () => {},
         onDiagnostic = () => {},
         iceServers = DEFAULT_ICE_SERVERS,
+        iceTransportPolicy = "all",
         iceGatheringTimeoutMs = 12_000,
         connectionTimeoutMs = 30_000
     }) {
@@ -74,7 +75,10 @@ export default class WebRtcPeerSession {
         this.iceGatheringTimeoutMs = iceGatheringTimeoutMs;
         this.connectionTimeoutMs = connectionTimeoutMs;
         this.sessionId = role === "HOST" ? createSessionId() : null;
-        this.peerConnection = new RTCPeerConnection({ iceServers });
+        this.peerConnection = new RTCPeerConnection({
+            iceServers,
+            iceTransportPolicy
+        });
         this.channel = null;
         this.closed = false;
         this.abortController = new AbortController();

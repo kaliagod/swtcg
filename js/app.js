@@ -2292,6 +2292,7 @@ async function createNetworkSession(
     const peerSession = new WebRtcPeerSession({
         role,
         iceServers: networkConfig.iceServers,
+        iceTransportPolicy: networkConfig.iceTransportPolicy,
         iceGatheringTimeoutMs: networkConfig.iceGatheringTimeoutMs,
         connectionTimeoutMs: networkConfig.connectionTimeoutMs,
         onStatus: handleNetworkStatus,

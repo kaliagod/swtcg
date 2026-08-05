@@ -16,13 +16,32 @@ const turnConfig = createPublicNetworkConfig({
             credential: "secret"
         }
     ]),
+    WEBRTC_ICE_TRANSPORT_POLICY: "relay",
     WEBRTC_ICE_GATHER_TIMEOUT_MS: "15000",
     WEBRTC_CONNECTION_TIMEOUT_MS: "45000",
     SIGNALING_REQUEST_TIMEOUT_MS: "9000"
 });
 assert.equal(turnConfig.iceServers.length, 2);
 assert.equal(turnConfig.iceServers[1].username, "user");
+assert.equal(turnConfig.iceTransportPolicy, "relay");
 assert.equal(turnConfig.connectionTimeoutMs, 45_000);
+
+assert.equal(
+    createPublicNetworkConfig({}).iceTransportPolicy,
+    "all"
+);
+assert.equal(createPublicNetworkConfig({
+    WEBRTC_ICE_TRANSPORT_POLICY: "all"
+}).iceTransportPolicy, "all");
+assert.equal(createPublicNetworkConfig({
+    WEBRTC_ICE_TRANSPORT_POLICY: "relay"
+}).iceTransportPolicy, "relay");
+assert.throws(
+    () => createPublicNetworkConfig({
+        WEBRTC_ICE_TRANSPORT_POLICY: "invalid"
+    }),
+    /WEBRTC_ICE_TRANSPORT_POLICY/
+);
 
 assert.throws(
     () => createPublicNetworkConfig({
@@ -48,6 +67,7 @@ const loaded = await loadNetworkConfig({
     })
 });
 assert.equal(loaded.source, "SERVER");
+assert.equal(loaded.iceTransportPolicy, "relay");
 assert.equal(loaded.warning, "");
 
 const fallback = await loadNetworkConfig({
@@ -56,6 +76,7 @@ const fallback = await loadNetworkConfig({
     }
 });
 assert.equal(fallback.source, "DEFAULT");
+assert.equal(fallback.iceTransportPolicy, "all");
 assert.match(fallback.warning, /既定のSTUN設定/);
 
 console.log("Public network config tests: OK");

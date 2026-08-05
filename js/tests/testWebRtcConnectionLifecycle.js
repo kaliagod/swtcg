@@ -50,6 +50,7 @@ const statuses = [];
 const session = new WebRtcPeerSession({
     role: "HOST",
     iceServers: [{ urls: "turn:turn.example.test" }],
+    iceTransportPolicy: "relay",
     onStatus: status => statuses.push(status),
     connectionTimeoutMs: 50
 });
@@ -58,6 +59,10 @@ assert.equal(offer.kind, "OFFER");
 assert.equal(
     session.peerConnection.config.iceServers[0].urls,
     "turn:turn.example.test"
+);
+assert.equal(
+    session.peerConnection.config.iceTransportPolicy,
+    "relay"
 );
 
 const connected = session.waitForConnection();

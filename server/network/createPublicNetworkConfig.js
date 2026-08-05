@@ -1,12 +1,26 @@
 const DEFAULT_ICE_SERVERS = Object.freeze([
     Object.freeze({ urls: "stun:stun.l.google.com:19302" })
 ]);
+const DEFAULT_ICE_TRANSPORT_POLICY = "all";
+const ICE_TRANSPORT_POLICIES = new Set(["all", "relay"]);
 
 function parseInteger(value, fallback, min, max) {
     const number = Number(value);
     return Number.isInteger(number) && number >= min && number <= max
         ? number
         : fallback;
+}
+
+function parseIceTransportPolicy(value) {
+    if (value === undefined) {
+        return DEFAULT_ICE_TRANSPORT_POLICY;
+    }
+    if (!ICE_TRANSPORT_POLICIES.has(value)) {
+        throw new Error(
+            "WEBRTC_ICE_TRANSPORT_POLICYはallまたはrelayを指定してください。"
+        );
+    }
+    return value;
 }
 
 function normalizeUrls(value) {
@@ -59,6 +73,9 @@ function parseIceServers(source) {
 export function createPublicNetworkConfig(environment = process.env) {
     return {
         iceServers: parseIceServers(environment.WEBRTC_ICE_SERVERS_JSON),
+        iceTransportPolicy: parseIceTransportPolicy(
+            environment.WEBRTC_ICE_TRANSPORT_POLICY
+        ),
         iceGatheringTimeoutMs: parseInteger(
             environment.WEBRTC_ICE_GATHER_TIMEOUT_MS,
             12_000,
@@ -80,4 +97,7 @@ export function createPublicNetworkConfig(environment = process.env) {
     };
 }
 
-export { DEFAULT_ICE_SERVERS };
+export {
+    DEFAULT_ICE_SERVERS,
+    DEFAULT_ICE_TRANSPORT_POLICY
+};

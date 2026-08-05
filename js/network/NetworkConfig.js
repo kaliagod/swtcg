@@ -2,6 +2,7 @@ const DEFAULT_CONFIG = Object.freeze({
     iceServers: Object.freeze([
         Object.freeze({ urls: "stun:stun.l.google.com:19302" })
     ]),
+    iceTransportPolicy: "all",
     iceGatheringTimeoutMs: 12_000,
     connectionTimeoutMs: 30_000,
     requestTimeoutMs: 10_000,
@@ -13,6 +14,7 @@ function assertConfig(config) {
     if (
         !Array.isArray(config?.iceServers) ||
         config.iceServers.length === 0 ||
+        !["all", "relay"].includes(config.iceTransportPolicy) ||
         !Number.isFinite(config.iceGatheringTimeoutMs) ||
         !Number.isFinite(config.connectionTimeoutMs) ||
         !Number.isFinite(config.requestTimeoutMs)
