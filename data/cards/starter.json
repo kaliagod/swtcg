@@ -1,0 +1,329 @@
+[
+    {
+        "id": "EVT001",
+        "name": "旅支度",
+        "type": "EVENT",
+        "cost": 0,
+        "tags": ["test-play"],
+        "text": ["カードを2枚引く。"],
+        "resolutionZone": "GRAVEYARD",
+        "effects": [{
+            "trigger": "PLAY",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{ "type": "DRAW", "amount": 2 }]
+        }]
+    },
+    { "id": "EVT002", "name": "野営", "type": "EVENT", "cost": 0, "text": ["テスト用イベント。"], "resolutionZone": "GRAVEYARD" },
+    { "id": "QST001", "name": "森の調査", "type": "QUEST", "cost": 0, "participationRequirements": { "minLevel": 2, "minStats": { "DEXTERITY": 4 }, "requiredTags": ["EXPLORER"] }, "questRequirements": { "DEXTERITY": 4 }, "questDamage": 2, "questRewardResources": 5, "text": ["参加条件はレベル2以上、器用4以上、「探索者」タグ。ダメージ2。成功報酬は参加者間でリソース5を均等割り。"] },
+    { "id": "QST002", "name": "危険な魔獣討伐", "type": "QUEST", "cost": 0, "tags": ["DANGER", "test-play"], "questRequirements": { "STRENGTH": 5 }, "questDamage": 3, "questRewardResources": 2, "text": ["「危険」タグを持つテスト依頼。達成条件は筋力5。ダメージ3。成功報酬はリソース2。"] },
+    { "id": "EQP001", "name": "旅人の剣", "type": "EQUIPMENT", "cost": 0, "equipmentSlot": "WEAPON", "statModifiers": { "STRENGTH": 1 }, "text": ["武器枠へ装備する。筋力+1。"] },
+    { "id": "ACC001", "name": "道標の護符", "type": "ACCESSORY", "cost": 0, "text": ["場へ装備するテスト用装飾品。"] },
+    {
+        "id": "ITM001",
+        "name": "使い切り薬",
+        "type": "ITEM",
+        "cost": 0,
+        "itemUse": "GRAVEYARD",
+        "text": ["設置後に使用し、カードを1枚引いて墓地へ送る。"],
+        "effects": [{
+            "trigger": "ACTIVATE",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{ "type": "DRAW", "amount": 1 }]
+        }]
+    },
+    {
+        "id": "ITM002",
+        "name": "冒険者の地図",
+        "type": "ITEM",
+        "cost": 0,
+        "itemUse": "COOLDOWN",
+        "text": ["設置後に使用し、カードを1枚引く。次の自分ターン開始時に表向きになる。"],
+        "effects": [{
+            "trigger": "ACTIVATE",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{ "type": "DRAW", "amount": 1 }]
+        }]
+    },
+    {
+        "id": "ITM003",
+        "name": "状態試験の護符",
+        "type": "ITEM",
+        "cost": 0,
+        "itemUse": "GRAVEYARD",
+        "tags": ["test-play"],
+        "text": ["場に出た時、自分に「護符準備」状態を付与する。使用時に1枚引いて墓地へ送り、場を離れた時にその状態を解除する。"],
+        "effects": [
+            {
+                "trigger": "ENTER",
+                "condition": { "type": "ALWAYS" },
+                "target": { "type": "SELF" },
+                "commands": [{
+                    "type": "ADD_STATUS",
+                    "status": "護符準備",
+                    "params": { "duration": "PERMANENT" }
+                }]
+            },
+            {
+                "trigger": "ACTIVATE",
+                "condition": { "type": "ALWAYS" },
+                "target": { "type": "SELF" },
+                "commands": [{ "type": "DRAW", "amount": 1 }]
+            },
+            {
+                "trigger": "LEAVE",
+                "condition": { "type": "ALWAYS" },
+                "target": { "type": "SELF" },
+                "commands": [{
+                    "type": "REMOVE_STATUS",
+                    "status": "護符準備"
+                }]
+            }
+        ]
+    },
+    { "id": "EVT003", "name": "街道の噂", "type": "EVENT", "cost": 0, "text": ["テスト用イベント。"], "resolutionZone": "GRAVEYARD" },
+    { "id": "EVT004", "name": "小休止", "type": "EVENT", "cost": 0, "text": ["テスト用イベント。"], "resolutionZone": "GRAVEYARD" },
+    { "id": "EVT005", "name": "偵察", "type": "EVENT", "cost": 0, "text": ["テスト用イベント。"], "resolutionZone": "GRAVEYARD" },
+    {
+        "id": "EVT006",
+        "name": "精神攪乱",
+        "type": "EVENT",
+        "cost": 0,
+        "text": ["プレイヤーを1人選ぶ。その冒険者のMPを1点消費させる。"],
+        "resolutionZone": "GRAVEYARD",
+        "effects": [{
+            "trigger": "PLAY",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "PLAYER", "amount": 1 },
+            "commands": [{ "type": "LOSE_MP", "amount": 1 }]
+        }]
+    },
+    {
+        "id": "EVT007",
+        "name": "模擬落石",
+        "type": "EVENT",
+        "cost": 0,
+        "tags": ["test-play"],
+        "text": ["プレイヤーを1人選び、通常ダメージ2を与える。ダメージ軽減の確認用。"],
+        "resolutionZone": "GRAVEYARD",
+        "effects": [{
+            "trigger": "PLAY",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "PLAYER", "amount": 1 },
+            "commands": [{ "type": "DAMAGE", "amount": 2 }]
+        }]
+    },
+    {
+        "id": "EVT008",
+        "name": "貫通衝撃",
+        "type": "EVENT",
+        "cost": 0,
+        "tags": ["test-play"],
+        "text": ["プレイヤーを1人選び、軽減不能ダメージ2を与える。軽減・無効を適用しない。"],
+        "resolutionZone": "GRAVEYARD",
+        "effects": [{
+            "trigger": "PLAY",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "PLAYER", "amount": 1 },
+            "commands": [{
+                "type": "DAMAGE",
+                "amount": 2,
+                "params": { "unpreventable": true }
+            }]
+        }]
+    },
+    { "id": "ADV001", "name": "駆け出しの冒険者", "type": "ADVENTURER", "tags": ["test-play"], "baseStats": { "DEXTERITY": 3, "AGILITY": 3, "STRENGTH": 3, "VITALITY": 3, "INTELLIGENCE": 3, "SPIRIT": 3 }, "text": ["テストプレイ用の冒険者。すべての基礎能力は3。"] },
+    { "id": "TRT001", "name": "探索の心得", "type": "TRAIT", "cost": 1, "levelGain": 1, "resolutionZone": "FIELD", "adventureAbilityType": "PASSIVE", "statModifiers": { "DEXTERITY": 1 }, "grantedTags": ["EXPLORER"], "text": ["常に器用+1。「探索者」タグを得る。"] },
+    { "id": "TRT002", "name": "不屈の生い立ち", "type": "TRAIT", "cost": 1, "levelGain": 1, "resolutionZone": "FIELD", "adventureAbilityType": "PASSIVE", "statModifiers": { "VITALITY": 1 }, "grantedTags": ["SURVIVOR"], "text": ["常に生命+1。「生存者」タグを得る。"] },
+    { "id": "SKL001", "name": "渾身の一撃", "type": "SKILL", "cost": 1, "levelGain": 1, "resolutionZone": "FIELD", "adventureAbilityType": "ACTIVE", "useRequirements": { "minLevel": 2, "minStats": { "STRENGTH": 3 } }, "activeQuestModifiers": { "STRENGTH": 2 }, "text": ["使用条件はレベル2以上、筋力3以上。依頼準備中に使用すると、この依頼中、筋力+2。使用後は裏向きになる。"] },
+    { "id": "SKL002", "name": "観察眼", "type": "SKILL", "cost": 1, "levelGain": 1, "resolutionZone": "FIELD", "adventureAbilityType": "PASSIVE", "statModifiers": { "INTELLIGENCE": 1 }, "grantedTags": ["SCOUT"], "text": ["常に知力+1。「斥候」タグを得る。"] },
+    {
+        "id": "MAG001",
+        "name": "癒しの光",
+        "type": "MAGIC",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "useRequirements": { "requiredTags": ["EXPLORER"], "forbiddenTags": ["SURVIVOR"] },
+        "text": ["依頼準備中、MP2を支払ってダメージを2回復する。"],
+        "effects": [{
+            "trigger": "ACTIVATE",
+            "condition": { "type": "ALWAYS" },
+            "cost": { "type": "MP", "amount": 2 },
+            "target": { "type": "SELF" },
+            "commands": [{ "type": "HEAL", "amount": 2 }]
+        }]
+    },
+    {
+        "id": "MAG002",
+        "name": "精密化",
+        "type": "MAGIC",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "activeQuestModifiers": { "DEXTERITY": 2 },
+        "text": ["依頼準備中、MP1を支払う。この依頼中、器用+2。"],
+        "effects": [{
+            "trigger": "ACTIVATE",
+            "condition": { "type": "ALWAYS" },
+            "cost": { "type": "MP", "amount": 1 },
+            "target": { "type": "SELF" },
+            "commands": []
+        }]
+    },
+    {
+        "id": "TRT003",
+        "name": "守護の心得",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "text": ["受けるダメージを1点軽減する。"],
+        "effects": [{
+            "trigger": "CONTINUOUS",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{ "type": "REDUCE_DAMAGE", "amount": 1 }]
+        }]
+    },
+    {
+        "id": "TRT004",
+        "name": "危地の専門家",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "text": ["「危険」タグを持つ依頼中のみ筋力+2。"],
+        "effects": [{
+            "trigger": "CONTINUOUS",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{
+                "type": "MODIFY_STAT",
+                "params": {
+                    "modifiers": { "STRENGTH": 2 },
+                    "questTags": ["DANGER"],
+                    "duration": "PASSIVE"
+                }
+            }]
+        }]
+    },
+    {
+        "id": "TRT005",
+        "name": "収集家の勘",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "text": ["リソースを得る際、追加で1枚得る。"],
+        "effects": [{
+            "trigger": "CONTINUOUS",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{ "type": "MODIFY_RESOURCE_GAIN", "amount": 1 }]
+        }]
+    },
+    {
+        "id": "TRT006",
+        "name": "魔力蓄積体質",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "text": ["MPを消費する際、代わりにこのカードへ同数の蓄積カウンターを置いてもよい。3個まで。"],
+        "effects": [{
+            "trigger": "CONTINUOUS",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{
+                "type": "REPLACE_MP_WITH_COUNTER",
+                "params": {
+                    "counter": "CHARGE",
+                    "counterPerMp": 1,
+                    "maxCounters": 3
+                }
+            }]
+        }]
+    },
+    {
+        "id": "TRT007",
+        "name": "危地の守護者",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "text": ["「危険」タグを持つ依頼中、受けるダメージを0にする。軽減不能ダメージには適用しない。"],
+        "effects": [{
+            "trigger": "CONTINUOUS",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{
+                "type": "PREVENT_QUEST_DAMAGE",
+                "params": { "questTags": ["DANGER"] }
+            }]
+        }]
+    },
+    {
+        "id": "TRT008",
+        "name": "魔力刻印",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "text": ["MPを消費する際、代わりにこのカードへ同数の刻印カウンターを置いてもよい。3個まで。"],
+        "effects": [{
+            "trigger": "CONTINUOUS",
+            "condition": { "type": "ALWAYS" },
+            "target": { "type": "SELF" },
+            "commands": [{
+                "type": "REPLACE_MP_WITH_COUNTER",
+                "params": {
+                    "counter": "RUNE",
+                    "counterPerMp": 1,
+                    "maxCounters": 3
+                }
+            }]
+        }]
+    },
+    {
+        "id": "TRT009",
+        "name": "日々の鍛錬",
+        "type": "TRAIT",
+        "cost": 1,
+        "levelGain": 1,
+        "resolutionZone": "FIELD",
+        "adventureAbilityType": "PASSIVE",
+        "tags": ["test-play"],
+        "text": ["自分のターン開始時、このターン中「鍛錬中」状態になる。自分のターン終了時、このカードに鍛錬カウンターを1個置く。"],
+        "effects": [
+            {
+                "trigger": "TURN_START",
+                "condition": { "type": "ALWAYS" },
+                "target": { "type": "SELF" },
+                "commands": [{
+                    "type": "ADD_STATUS",
+                    "status": "鍛錬中",
+                    "params": { "duration": "TURN" }
+                }]
+            },
+            {
+                "trigger": "TURN_END",
+                "condition": { "type": "ALWAYS" },
+                "target": { "type": "SELF_CARD" },
+                "commands": [{
+                    "type": "ADD_COUNTER",
+                    "amount": 1,
+                    "params": { "counter": "TRAINING" }
+                }]
+            }
+        ]
+    }
+]

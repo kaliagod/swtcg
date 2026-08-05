@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Local environment variables and secrets
+.env
+.env.*
+!.env.example
+.npmrc
+
+# Private keys, certificates, and credential exports
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+credentials*.json
+*-credentials.json
+service-account*.json
+secrets*.json
+
+# Logs and local tooling state
+*.log
+npm-debug.log*
+.vercel/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

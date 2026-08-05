@@ -1,0 +1,10 @@
+const SelectionTypes = Object.freeze({
+    TARGET: "TARGET",
+    RESOURCE_PAYMENT: "RESOURCE_PAYMENT",
+    EFFECT_ORDER: "EFFECT_ORDER",
+    OVERFLOW_DAMAGE: "OVERFLOW_DAMAGE",
+    EQUIPMENT_LIMIT: "EQUIPMENT_LIMIT",
+    MP_REPLACEMENT: "MP_REPLACEMENT"
+});
+
+export default SelectionTypes;

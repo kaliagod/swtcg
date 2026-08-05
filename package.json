@@ -1,0 +1,19 @@
+{
+    "name": "adventure-tcg-test-table",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "test": "npm run test:engine && npm run test:ui",
+        "test:engine": "node js/tests/runEngineTests.js",
+        "test:ui": "node js/tests/testUiBasicOperations.js",
+        "test:m3:deployment": "node scripts/verifyM3Deployment.js"
+    },
+    "devDependencies": {
+        "playwright-core": "^1.62.1"
+    },
+    "dependencies": {
+        "exceljs": "^4.4.0",
+        "jszip": "^3.10.1"
+    }
+}
