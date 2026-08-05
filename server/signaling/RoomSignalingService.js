@@ -3,6 +3,7 @@ import {
     randomBytes,
     timingSafeEqual
 } from "node:crypto";
+import { annotateFailureStage } from "./signalingErrors.js";
 
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_ID_LENGTH = 10;
@@ -24,13 +25,21 @@ function createRoomId() {
 }
 
 function createToken() {
-    return randomBytes(32).toString("base64url");
+    try {
+        return randomBytes(32).toString("base64url");
+    } catch (error) {
+        throw annotateFailureStage(error, "token-sign");
+    }
 }
 
 function hashToken(token, secret) {
-    return createHmac("sha256", secret)
-        .update(String(token ?? ""))
-        .digest("hex");
+    try {
+        return createHmac("sha256", secret)
+            .update(String(token ?? ""))
+            .digest("hex");
+    } catch (error) {
+        throw annotateFailureStage(error, "token-sign");
+    }
 }
 
 function equalText(left, right) {

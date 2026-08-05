@@ -8,11 +8,19 @@ import resolveUpstashConnection from
     "../server/signaling/resolveUpstashConnection.js";
 import {
     createErrorResponse,
-    executeSignalingAction
+    executeSignalingAction,
+    getSignalingAction
 } from "../server/signaling/signalingHttp.js";
+import {
+    annotateFailureStage,
+    logSignalingFailure
+} from "../server/signaling/signalingErrors.js";
 
 const MAX_BODY_BYTES = 128 * 1024;
 let runtime = null;
+
+const SENSITIVE_ENVIRONMENT_NAME =
+    /(TOKEN|SECRET|CREDENTIAL|PASSWORD|AUTHORIZATION)/i;
 
 function applyCors(request, response) {
     const origin = request.headers.origin;
@@ -38,40 +46,78 @@ function getRuntime() {
     if (runtime) {
         return runtime;
     }
-    const store = new UpstashRoomStore(
-        resolveUpstashConnection(process.env)
-    );
-    runtime = {
-        service: new RoomSignalingService({
-            store,
-            secret: process.env.SIGNALING_SECRET,
-            ttlSeconds: getPositiveInteger(
-                "SIGNALING_ROOM_TTL_SECONDS",
-                600,
-                { min: 60, max: 3600 }
-            )
-        }),
-        rateLimiter: new SignalingRateLimiter({
-            store,
-            limits: {
-                CREATE: {
-                    limit: getPositiveInteger("SIGNALING_CREATE_LIMIT", 6),
-                    windowSeconds: getPositiveInteger(
-                        "SIGNALING_CREATE_WINDOW_SECONDS",
-                        60
-                    )
-                },
-                JOIN: {
-                    limit: getPositiveInteger("SIGNALING_JOIN_LIMIT", 30),
-                    windowSeconds: getPositiveInteger(
-                        "SIGNALING_JOIN_WINDOW_SECONDS",
-                        60
-                    )
+    try {
+        const connection = resolveUpstashConnection(process.env);
+        if (!connection.url || !connection.token) {
+            const error = new Error(
+                "Upstash REST API environment variables are incomplete"
+            );
+            error.name = "SignalingConfigurationError";
+            error.code = "UPSTASH_ENVIRONMENT_MISSING";
+            throw error;
+        }
+        if (typeof process.env.SIGNALING_SECRET !== "string" ||
+            process.env.SIGNALING_SECRET.length < 32) {
+            const error = new Error(
+                "SIGNALING_SECRET must contain at least 32 characters"
+            );
+            error.name = "SignalingConfigurationError";
+            error.code = "SIGNALING_SECRET_INVALID";
+            throw error;
+        }
+        const store = new UpstashRoomStore(connection);
+        runtime = {
+            service: new RoomSignalingService({
+                store,
+                secret: process.env.SIGNALING_SECRET,
+                ttlSeconds: getPositiveInteger(
+                    "SIGNALING_ROOM_TTL_SECONDS",
+                    600,
+                    { min: 60, max: 3600 }
+                )
+            }),
+            rateLimiter: new SignalingRateLimiter({
+                store,
+                limits: {
+                    CREATE: {
+                        limit: getPositiveInteger(
+                            "SIGNALING_CREATE_LIMIT",
+                            6
+                        ),
+                        windowSeconds: getPositiveInteger(
+                            "SIGNALING_CREATE_WINDOW_SECONDS",
+                            60
+                        )
+                    },
+                    JOIN: {
+                        limit: getPositiveInteger(
+                            "SIGNALING_JOIN_LIMIT",
+                            30
+                        ),
+                        windowSeconds: getPositiveInteger(
+                            "SIGNALING_JOIN_WINDOW_SECONDS",
+                            60
+                        )
+                    }
                 }
-            }
-        })
-    };
-    return runtime;
+            })
+        };
+        return runtime;
+    } catch (error) {
+        throw annotateFailureStage(error, "environment-validation");
+    }
+}
+
+function getSensitiveLogValues(body) {
+    const environmentValues = Object.entries(process.env)
+        .filter(([name]) => SENSITIVE_ENVIRONMENT_NAME.test(name))
+        .map(([, value]) => value);
+    return [
+        ...environmentValues,
+        body?.hostToken,
+        body?.guestToken,
+        body?.sessionToken
+    ].filter(value => typeof value === "string" && value.length >= 4);
 }
 
 function getClientKey(request) {
@@ -125,27 +171,65 @@ export default async function handler(request, response) {
         });
         return;
     }
+    let body = null;
+    let action = "UNKNOWN";
+    let failureStage = "request-parse";
+    let result;
     try {
+        body = await readBody(request);
+        action = getSignalingAction(body);
+        failureStage = "environment-validation";
         const { service, rateLimiter } = getRuntime();
-        const result = await executeSignalingAction(
+        failureStage = "action-execution";
+        result = await executeSignalingAction(
             service,
-            await readBody(request),
+            body,
             { rateLimiter, clientKey: getClientKey(request) }
         );
-        response.status(200).json(result);
     } catch (error) {
         if (error instanceof SyntaxError) {
             error.statusCode = 400;
             error.code = "INVALID_JSON";
             error.message = "JSONを読み取れませんでした。";
         }
-        const failure = createErrorResponse(error);
+        const failureError = annotateFailureStage(error, failureStage);
+        logSignalingFailure(failureError, {
+            action,
+            failureStage,
+            sensitiveValues: getSensitiveLogValues(body)
+        });
+        const failure = createErrorResponse(failureError);
         if (failure.body.retryAfterSeconds) {
             response.setHeader(
                 "Retry-After",
                 String(failure.body.retryAfterSeconds)
             );
         }
-        response.status(failure.statusCode).json(failure.body);
+        try {
+            response.status(failure.statusCode).json(failure.body);
+        } catch (responseError) {
+            const responseFailure = annotateFailureStage(
+                responseError,
+                "response-build"
+            );
+            logSignalingFailure(responseFailure, {
+                action,
+                failureStage: "response-build",
+                sensitiveValues: getSensitiveLogValues(body)
+            });
+            throw responseFailure;
+        }
+        return;
+    }
+    try {
+        response.status(200).json(result);
+    } catch (error) {
+        const failureError = annotateFailureStage(error, "response-build");
+        logSignalingFailure(failureError, {
+            action,
+            failureStage: "response-build",
+            sensitiveValues: getSensitiveLogValues(body)
+        });
+        throw failureError;
     }
 }

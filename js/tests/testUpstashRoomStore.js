@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 
 import UpstashRoomStore from
     "../../server/signaling/UpstashRoomStore.js";
+import { UpstashRestError } from
+    "../../server/signaling/signalingErrors.js";
 
 const commands = [];
 const results = [
@@ -86,5 +88,62 @@ assert.deepEqual(commands[6], [
     `adventure-tcg:signal:answer:${roomId}`,
     `adventure-tcg:signal:guest-token:${roomId}`
 ]);
+
+const networkFailureStore = new UpstashRoomStore({
+    url: "https://redis.example.test",
+    token: "DO_NOT_LOG_NETWORK_TOKEN",
+    fetchImpl: async () => {
+        throw new TypeError("fetch failed");
+    }
+});
+await assert.rejects(
+    networkFailureStore.getRoom(roomId),
+    error => error instanceof UpstashRestError &&
+        error.code === "UPSTASH_REST_ERROR" &&
+        error.statusCode === 503 &&
+        error.failureStage === "room-load" &&
+        error.upstashHttpStatus === null &&
+        error.upstashErrorType === "TypeError"
+);
+
+const httpFailureStore = new UpstashRoomStore({
+    url: "https://redis.example.test",
+    token: "DO_NOT_LOG_HTTP_TOKEN",
+    fetchImpl: async () => ({
+        ok: false,
+        status: 401,
+        async json() {
+            return { error: "WRONGPASS invalid credentials" };
+        }
+    })
+});
+await assert.rejects(
+    httpFailureStore.createRoom(roomId, {}, 600),
+    error => error instanceof UpstashRestError &&
+        error.failureStage === "room-save" &&
+        error.upstashHttpStatus === 401 &&
+        error.upstashErrorType === "WRONGPASS" &&
+        error.upstashResponseSummary.hasError === true &&
+        !JSON.stringify(error.upstashResponseSummary).includes("credentials")
+);
+
+const invalidResponseStore = new UpstashRoomStore({
+    url: "https://redis.example.test",
+    token: "DO_NOT_LOG_INVALID_RESPONSE_TOKEN",
+    fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        async json() {
+            throw new SyntaxError("invalid JSON");
+        }
+    })
+});
+await assert.rejects(
+    invalidResponseStore.incrementRateLimit("create:client", 60),
+    error => error instanceof UpstashRestError &&
+        error.failureStage === "rate-limit" &&
+        error.upstashHttpStatus === 200 &&
+        error.upstashErrorType === "INVALID_JSON_RESPONSE"
+);
 
 console.log("Upstash room store tests: OK");

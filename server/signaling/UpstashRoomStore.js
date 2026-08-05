@@ -1,3 +1,9 @@
+import {
+    UpstashRestError,
+    extractUpstashErrorType,
+    summarizeUpstashPayload
+} from "./signalingErrors.js";
+
 export default class UpstashRoomStore {
     constructor({
         url,
@@ -22,12 +28,12 @@ export default class UpstashRoomStore {
             "NX",
             "EX",
             ttlSeconds
-        ]);
+        ], "room-save");
         return result === "OK";
     }
 
     async getRoom(roomId) {
-        return this._getJson(this._roomKey(roomId));
+        return this._getJson(this._roomKey(roomId), "room-load");
     }
 
     async setAnswer(roomId, answer, ttlSeconds) {
@@ -38,7 +44,7 @@ export default class UpstashRoomStore {
             "NX",
             "EX",
             ttlSeconds
-        ]);
+        ], "room-save");
         return result === "OK";
     }
 
@@ -59,7 +65,7 @@ export default class UpstashRoomStore {
             this._answerKey(roomId),
             tokenHash,
             String(ttlSeconds)
-        ]);
+        ], "room-save");
     }
 
     async setAnswerWithGuestToken(roomId, tokenHash, answer, ttlSeconds) {
@@ -81,11 +87,11 @@ export default class UpstashRoomStore {
             tokenHash,
             JSON.stringify(answer),
             String(ttlSeconds)
-        ]);
+        ], "room-save");
     }
 
     async getAnswer(roomId) {
-        return this._getJson(this._answerKey(roomId));
+        return this._getJson(this._answerKey(roomId), "room-load");
     }
 
     async consumeAnswer(roomId) {
@@ -102,7 +108,7 @@ export default class UpstashRoomStore {
             this._roomKey(roomId),
             this._answerKey(roomId),
             this._guestTokenKey(roomId)
-        ]);
+        ], "room-save");
         return value === null ? null : JSON.parse(value);
     }
 
@@ -118,7 +124,7 @@ export default class UpstashRoomStore {
             "1",
             this._rateLimitKey(key),
             String(windowSeconds)
-        ]);
+        ], "rate-limit");
     }
 
     async deleteRoom(roomId) {
@@ -127,15 +133,15 @@ export default class UpstashRoomStore {
             this._roomKey(roomId),
             this._answerKey(roomId),
             this._guestTokenKey(roomId)
-        ]);
+        ], "room-save");
     }
 
-    async _getJson(key) {
-        const value = await this._command(["GET", key]);
+    async _getJson(key, failureStage) {
+        const value = await this._command(["GET", key], failureStage);
         return value === null ? null : JSON.parse(value);
     }
 
-    async _command(command) {
+    async _command(command, failureStage) {
         let response;
         try {
             response = await this.fetchImpl(this.url, {
@@ -147,25 +153,51 @@ export default class UpstashRoomStore {
                 body: JSON.stringify(command)
             });
         } catch (cause) {
-            throw this._createUnavailableError(cause);
+            throw this._createUnavailableError({
+                cause,
+                failureStage,
+                errorType: extractUpstashErrorType(cause)
+            });
         }
-        const payload = await response.json().catch(() => ({}));
+        let payload;
+        try {
+            payload = await response.json();
+        } catch (cause) {
+            throw this._createUnavailableError({
+                cause,
+                failureStage,
+                httpStatus: response.status,
+                errorType: "INVALID_JSON_RESPONSE",
+                responseSummary: {
+                    payloadType: "unreadable",
+                    hasError: false,
+                    hasResult: false,
+                    errorFields: []
+                }
+            });
+        }
         if (!response.ok || payload.error) {
-            throw this._createUnavailableError(
-                payload.error ?? response.status
-            );
+            throw this._createUnavailableError({
+                failureStage,
+                httpStatus: response.status,
+                errorType: extractUpstashErrorType(payload.error),
+                responseSummary: summarizeUpstashPayload(payload)
+            });
+        }
+        if (!payload || typeof payload !== "object" ||
+            !Object.hasOwn(payload, "result")) {
+            throw this._createUnavailableError({
+                failureStage,
+                httpStatus: response.status,
+                errorType: "INVALID_RESPONSE_SHAPE",
+                responseSummary: summarizeUpstashPayload(payload)
+            });
         }
         return payload.result;
     }
 
-    _createUnavailableError(cause) {
-        const error = new Error(
-            "シグナリング用データストアへ接続できませんでした。"
-        );
-        error.statusCode = 503;
-        error.code = "SIGNALING_STORE_UNAVAILABLE";
-        error.cause = cause;
-        return error;
+    _createUnavailableError(details) {
+        return new UpstashRestError(details);
     }
 
     _roomKey(roomId) {
