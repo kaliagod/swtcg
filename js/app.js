@@ -2145,7 +2145,7 @@ function renderP2PLobby() {
                         <button type="button" class="button ${roomSignaling ? "button--primary" : ""}" data-action="p2p-set-signaling" data-signaling-mode="ROOM">ルームID</button>
                         <button type="button" class="button ${roomSignaling ? "" : "button--primary"}" data-action="p2p-set-signaling" data-signaling-mode="MANUAL">手動コード</button>
                     </div>
-                    <div>
+                    <div class="p2p-role-options">
                         <button type="button" class="p2p-choice__card" data-action="p2p-host">
                             <span>PLAYER 1</span>
                             <strong>対戦を募集する</strong>

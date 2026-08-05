@@ -175,6 +175,27 @@ async function waitForInputValue(locator, timeoutMs = 20000) {
     throw new Error("接続コードの作成がタイムアウトしました。");
 }
 
+async function assertP2PRoleSelectionVisible(page) {
+    const choiceBox = await page.locator(".p2p-choice").boundingBox();
+    const methodBox = await page.locator(".p2p-method").boundingBox();
+    const hostBox = await page.locator('[data-action="p2p-host"]').boundingBox();
+    const guestBox = await page.locator('[data-action="p2p-guest"]').boundingBox();
+
+    assert.ok(choiceBox && methodBox && hostBox && guestBox);
+    const choiceBottom = choiceBox.y + choiceBox.height;
+    for (const roleBox of [hostBox, guestBox]) {
+        assert.ok(
+            roleBox.y >= choiceBox.y &&
+            roleBox.y + roleBox.height <= choiceBottom + 1,
+            "P2Pの募集・参加ボタンは選択パネル内に表示される必要があります。"
+        );
+    }
+    assert.ok(
+        methodBox.height < choiceBox.height / 3,
+        "接続方法ボタンが選択パネルを占有しすぎています。"
+    );
+}
+
 async function runP2PBrowserFlow(
     browser,
     baseUrl,
@@ -197,6 +218,7 @@ async function runP2PBrowserFlow(
                 '[data-signaling-mode="MANUAL"]'
             ).click();
         }
+        await assertP2PRoleSelectionVisible(page);
     }
 
     await host.locator('[data-action="p2p-host"]').click();
